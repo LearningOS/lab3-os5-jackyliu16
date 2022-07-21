@@ -55,6 +55,7 @@ pub fn sys_fork() -> isize {
     new_pid as isize
 }
 
+// waiting a subprocess to become a The zombie thread, recyled all source and collect it's return
 /// Syscall Exec which accepts the elf path
 pub fn sys_exec(path: *const u8) -> isize {
     let token = current_user_token();
