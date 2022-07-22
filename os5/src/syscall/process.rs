@@ -109,7 +109,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
 // YOUR JOB: 引入虚地址后重写 sys_get_time
 pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
     let us = get_time_us();
-    let ts_phy_ptr = translated_refmut(current_user_token(), ti);
+    let ts_phy_ptr = translated_refmut(current_user_token(), ts);
     unsafe {
         *ts_phy_ptr = TimeVal {
             sec: us / 1_000_000,
@@ -121,17 +121,7 @@ pub fn sys_get_time(ts: *mut TimeVal, _tz: usize) -> isize {
 
 // YOUR JOB: 引入虚地址后重写 sys_task_info
 pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
-    let (s, st, t) = get_task_info();
-    let ts = page_table::get_phy_addr(current_user_token(), ti as usize) as *mut TaskInfo;
-
-    unsafe {
-        *ts = TaskInfo {
-            status: s,
-            syscall_times: st,
-            time: t / 1_000,
-        };
-    }
-    0
+    -1
 }
 
 // YOUR JOB: 实现sys_set_priority，为任务添加优先级
@@ -142,28 +132,28 @@ pub fn sys_set_priority(_prio: isize) -> isize {
 // YOUR JOB: 扩展内核以实现 sys_mmap 和 sys_munmap
 pub fn sys_mmap(_start: usize, _len: usize, _port: usize) -> isize {
 
-    let mut align_len: usize = len;
-    if start % PAGE_SIZE != 0 {
+    let mut align_len: usize = _len;
+    if _start % PAGE_SIZE != 0 {
         return -1;
     }
 
-    if len % PAGE_SIZE != 0 {
-        align_len = ( len / PAGE_SIZE + 1 ) * PAGE_SIZE;
+    if _len % PAGE_SIZE != 0 {
+        align_len = ( _len / PAGE_SIZE + 1 ) * PAGE_SIZE;
     }
 
-    if port & !0x07 != 0 || port & 0x7 == 0 {
+    if _port & !0x07 != 0 || _port & 0x7 == 0 {
         println!("[sys_mmap]: port illeglity");
         return -1;
     }
 
-    // 
+    0 
 }
 
 pub fn sys_munmap(_start: usize, _len: usize) -> isize {
     if _start % PAGE_SIZE != 0 || _len % PAGE_SIZE != 0 {
         return -1;
     }
-// 
+
     0
 }
 
