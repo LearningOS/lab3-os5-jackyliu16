@@ -38,6 +38,25 @@ pub struct MemorySet {
 }
 
 impl MemorySet {
+    // if find VPN in map_area then return 0 else -1
+    pub fn find_vpn(&self, vpn: VirtPageNum) -> bool {
+        let pte = self.translate(vpn);
+
+        match pte {
+            Some(x) => {
+                if x.is_valid() { return true }
+                else { return false }
+            }
+            None => false
+        }
+
+        // for map_area in self.areas.iter() {
+        //     if map_area.find_vpn(vpn) {
+        //         return true;
+        //     }
+        // }
+        // false
+    }
     pub fn new_bare() -> Self {
         Self {
             page_table: PageTable::new(),
@@ -263,6 +282,14 @@ pub struct MapArea {
 }
 
 impl MapArea {
+    pub fn find_vpn(&self, vpn: usize) -> bool {
+        for item in self.vpn_range.get_start().0..self.vpn_range.get_end().0 {
+            if vpn == item {
+                return true;
+            }
+        }
+        false
+    }
     pub fn new(
         start_va: VirtAddr,
         end_va: VirtAddr,

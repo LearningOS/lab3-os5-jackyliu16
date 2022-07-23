@@ -17,7 +17,7 @@ mod switch;
 #[allow(clippy::module_inception)]
 mod task;
 
-use crate::loader::get_app_data_by_name;
+use crate::{loader::get_app_data_by_name, mm::{VirtPageNum, MapPermission, VirtAddr}};
 use alloc::sync::Arc;
 use lazy_static::*;
 use manager::fetch_task;
@@ -96,4 +96,32 @@ lazy_static! {
 
 pub fn add_initproc() {
     add_task(INITPROC.clone());
+}
+
+use crate::config::PAGE_SIZE;
+#[allow(dead_code, unused_variables, unused)]
+pub fn mmap(start: usize, len: usize, port: usize) -> isize{
+
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+
+    let start_va = VirtPageNum::from(start / PAGE_SIZE);
+    let end_va = VirtPageNum::from((start+len) / PAGE_SIZE);
+
+    for vpn in start_va.0..end_va.0 {
+        if inner.memory_set.find_vpn(VirtPageNum(vpn)) {
+            println!("there is a overlap!!!");
+            return -1;
+        }
+    }
+
+    let permission = MapPermission::from_bits(((port << 1) | 16) as u8);
+    
+    inner.memory_set.insert_framed_area(VirtAddr::from(start_va), VirtAddr::from(end_va), permission.unwrap());
+
+    0
+}
+#[allow(unused)]
+pub fn unmmap(start: usize, len: usize) -> isize {
+    -1
 }

@@ -2,9 +2,10 @@
 
 use crate::loader::get_app_data_by_name;
 use crate::mm::{translated_refmut, translated_str};
+#[allow(unused_imports)]
 use crate::task::{
     add_task, current_task, current_user_token, exit_current_and_run_next,
-    suspend_current_and_run_next, TaskStatus,
+    suspend_current_and_run_next, TaskStatus, mmap, unmmap,
 };
 use crate::timer::get_time_us;
 use alloc::sync::Arc;
@@ -130,23 +131,16 @@ pub fn sys_set_priority(_prio: isize) -> isize {
 }
 
 // YOUR JOB: 扩展内核以实现 sys_mmap 和 sys_munmap
-pub fn sys_mmap(_start: usize, _len: usize, _port: usize) -> isize {
+pub fn sys_mmap(_start: usize, mut _len: usize, _port: usize) -> isize {
 
-    let mut align_len: usize = _len;
-    if _start % PAGE_SIZE != 0 {
-        return -1;
-    }
+    if (_start % PAGE_SIZE) != 0 { return -1; }
+    if _port & !0x7 != 0 || _port & 0x7 == 0 { return -1; }
 
     if _len % PAGE_SIZE != 0 {
-        align_len = ( _len / PAGE_SIZE + 1 ) * PAGE_SIZE;
-    }
-
-    if _port & !0x07 != 0 || _port & 0x7 == 0 {
-        println!("[sys_mmap]: port illeglity");
-        return -1;
-    }
-
-    0 
+        _len = ( _len / PAGE_SIZE + 1 ) * PAGE_SIZE;
+    } 
+    
+    mmap(_start, _len, _port)
 }
 
 pub fn sys_munmap(_start: usize, _len: usize) -> isize {
