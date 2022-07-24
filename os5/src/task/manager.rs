@@ -5,6 +5,8 @@
 
 
 use super::TaskControlBlock;
+use crate::config::BIGSTRIDE;
+// use crate::config::BIGSTRIDE;
 use crate::sync::UPSafeCell;
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
@@ -28,7 +30,34 @@ impl TaskManager {
     }
     /// Take a process out of the ready queue
     pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
-        self.ready_queue.pop_front()
+        // self.ready_queue.pop_front()
+        let mut min_stride: u8 = u8::MAX;
+        let mut idx = 0;
+        for i in 0..self.ready_queue.len() {
+            let task = &self.ready_queue[i];
+            let inner = task.inner_exclusive_access();
+            if i == 0 {
+                min_stride = inner.pass;
+                idx = i;
+            }
+            else {
+                let cmp = (inner.pass - min_stride) as i8;
+                if cmp < 0 {
+                    min_stride = inner.pass;
+                    idx = i;
+                }
+            }
+            drop(inner);
+            drop(task);
+        }
+
+        let task = &self.ready_queue[idx];
+        let mut inner = task.inner_exclusive_access();
+        let pass: u8 = BIGSTRIDE / inner.piro;
+        inner.pass += pass;
+        drop(inner);
+        drop(task);
+        self.ready_queue.remove(idx)
     }
 }
 

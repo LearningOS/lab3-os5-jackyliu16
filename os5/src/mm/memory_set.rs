@@ -38,8 +38,19 @@ pub struct MemorySet {
 }
 
 impl MemorySet {
+    pub fn delete_pte_from(&mut self, vpn: VirtPageNum) {
+        println!("===================================");
+        for map_area in self.areas.iter_mut() {
+            if map_area.has_vpn(vpn) {
+                print!("======= delete succeed~ ====== ");
+                map_area.unmap_one(&mut self.page_table, vpn);
+            }
+        }
+
+    }
     // if find VPN in map_area then return 0 else -1
     pub fn find_vpn(&self, vpn: VirtPageNum) -> bool {
+
         let pte = self.translate(vpn);
 
         match pte {
@@ -49,6 +60,13 @@ impl MemorySet {
             }
             None => false
         }
+
+        // for map_area in self.areas.iter() {
+        //     if map_area.has_vpn(vpn) {
+        //         return true;
+        //     }
+        // }
+        // return false;
 
         // for map_area in self.areas.iter() {
         //     if map_area.find_vpn(vpn) {
@@ -77,6 +95,7 @@ impl MemorySet {
             MapArea::new(start_va, end_va, MapType::Framed, permission),
             None,
         );
+        // println!("insert in {} to {} ", start_va.0, end_va.0);
     }
     pub fn remove_area_with_start_vpn(&mut self, start_vpn: VirtPageNum) {
         if let Some((idx, area)) = self
@@ -282,13 +301,8 @@ pub struct MapArea {
 }
 
 impl MapArea {
-    pub fn find_vpn(&self, vpn: usize) -> bool {
-        for item in self.vpn_range.get_start().0..self.vpn_range.get_end().0 {
-            if vpn == item {
-                return true;
-            }
-        }
-        false
+    pub fn has_vpn(&self, vpn: VirtPageNum) -> bool {
+        return self.vpn_range.get_start() <= vpn && vpn <= self.vpn_range.get_end();
     }
     pub fn new(
         start_va: VirtAddr,

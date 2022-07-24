@@ -2,6 +2,7 @@
 
 use crate::loader::get_app_data_by_name;
 use crate::mm::{translated_refmut, translated_str};
+use crate::task::set_prio;
 #[allow(unused_imports)]
 use crate::task::{
     add_task, current_task, current_user_token, exit_current_and_run_next,
@@ -127,7 +128,12 @@ pub fn sys_task_info(ti: *mut TaskInfo) -> isize {
 
 // YOUR JOB: 实现sys_set_priority，为任务添加优先级
 pub fn sys_set_priority(_prio: isize) -> isize {
-    -1
+    if _prio <= 1 {
+        return -1;
+    }
+
+    set_prio(_prio as u8);
+    _prio
 }
 
 // YOUR JOB: 扩展内核以实现 sys_mmap 和 sys_munmap
@@ -144,11 +150,13 @@ pub fn sys_mmap(_start: usize, mut _len: usize, _port: usize) -> isize {
 }
 
 pub fn sys_munmap(_start: usize, _len: usize) -> isize {
+    println!("Inside sys_munmap!!!");
     if _start % PAGE_SIZE != 0 || _len % PAGE_SIZE != 0 {
+        println!("out because page not match");
         return -1;
     }
 
-    0
+    unmmap(_start, _len) 
 }
 
 //
