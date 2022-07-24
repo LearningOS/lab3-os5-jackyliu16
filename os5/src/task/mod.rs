@@ -112,6 +112,7 @@ pub fn mmap(start: usize, len: usize, port: usize) -> isize{
     println!("3");
     for vpn in start_va.0..end_va.0 {
         if inner.memory_set.find_vpn(VirtPageNum(vpn)) {
+            // println!("{}  {}", start / PAGE_SIZE, (start + len) / PAGE_SIZE);
             println!("there is a overlap!!!");
             return -1;
         }

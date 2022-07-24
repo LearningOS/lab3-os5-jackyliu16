@@ -31,6 +31,22 @@ impl TaskManager {
     /// Take a process out of the ready queue
     pub fn fetch(&mut self) -> Option<Arc<TaskControlBlock>> {
         // self.ready_queue.pop_front()
+
+        // firstly we just go thougth all task in ready_queue then we pick the minimum one 
+        // let mut idx = 0;
+        // let mut min = u8::MAX;
+
+        // for i in 1..self.ready_queue.len() {
+        //     let inner = self.ready_queue[i].inner_exclusive_access();
+        //     let p = inner.pass;
+        //     if (p - min) as u8 <= 0 {
+        //         min = p;
+        //         idx = i;
+        //     }
+        //     drop(inner);
+        // }
+
+        // self.ready_queue.remove(idx)
         let mut min_stride: u8 = u8::MAX;
         let mut idx = 0;
         for i in 0..self.ready_queue.len() {
@@ -39,9 +55,8 @@ impl TaskManager {
             if i == 0 {
                 min_stride = inner.pass;
                 idx = i;
-            }
-            else {
-                let cmp = (inner.pass - min_stride) as i8;
+            } else {
+                let cmp: i8 = (inner.pass - min_stride) as i8;
                 if cmp < 0 {
                     min_stride = inner.pass;
                     idx = i;
